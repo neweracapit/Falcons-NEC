@@ -6,9 +6,14 @@ try:
         page_title="NewEraCap ML-Enabled",
         page_icon="../misc/favicon_box.ico"    # Local file
     )
-    set_bg("../misc/new_era_cap_cover.jpeg",opacity=0.9)
+    url = 'https://github.com/neweracapit/Falcons-NEC/blob/main/misc/new_era_cap_cover.jpeg'
 except:
-    print("Error Loading Background image and Favicon")
+    print("Error Loading Background image")
+
+try:
+    set_bg(url=url,opacity=0.9)
+except: 
+    pass
 
 
 
