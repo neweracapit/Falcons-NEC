@@ -1,15 +1,19 @@
 import streamlit as st
 from streamlit_main import *
 
-st.set_page_config(
-    page_title="NewEraCap ML-Enabled",
-    page_icon="../Falcons-NEC/misc/favicon_box.ico"    # Local file
-)
+try:
+    st.set_page_config(
+        page_title="NewEraCap ML-Enabled",
+        page_icon="../misc/favicon_box.ico"    # Local file
+    )
+    set_bg("../misc/new_era_cap_cover.jpeg",opacity=0.9)
+except:
+    print("Error Loading Background image and Favicon")
 
 
 
 # Set Background Image
-set_bg("../Falcons-NEC/misc/new_era_cap_cover.jpeg",opacity=0.9)
+
 
 # Define 2 tabs Purchase and Sales
 
