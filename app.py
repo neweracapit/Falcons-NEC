@@ -6,11 +6,12 @@ try:
         page_title="NewEraCap ML-Enabled",
         page_icon="../misc/favicon_box.ico"    # Local file
     )
-    url = 'https://github.com/neweracapit/Falcons-NEC/blob/main/misc/new_era_cap_cover.jpeg'
+    
 except:
     print("Error Loading Background image")
 
 try:
+    url = 'https://github.com/neweracapit/Falcons-NEC/blob/main/misc/new_era_cap_cover.jpeg'
     set_bg(url=url,opacity=0.9)
 except: 
     pass
