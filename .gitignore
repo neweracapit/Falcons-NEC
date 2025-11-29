@@ -1,8 +1,9 @@
 # Data folder ignore
 data/
-
+predicted_data/
 # test file
 test.py
+check_ui.py
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

@@ -1,2 +1,5 @@
 streamlit
 pandas
+azure-storage-blob 
+azure-identity
+plotly
