@@ -1,9 +1,13 @@
 # Data folder ignore
 data/
 predicted_data/
+
 # test file
 test.py
 check_ui.py
+
+# imp files
+.streamlit/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

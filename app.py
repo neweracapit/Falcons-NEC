@@ -6,6 +6,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 import json
 from datetime import datetime
+import time
 
 
 st.markdown("""
@@ -67,7 +68,7 @@ with sales:
         time_period = st.radio(
             "Time Period",
             options=["Quarterly", "Yearly"],
-            horizontal=True,    
+            #horizontal=True,    
         )
 
     with range_bar:
@@ -144,6 +145,7 @@ with sales:
         if selected_fabric_type != "All":
             df_filtered = df_filtered[df_filtered["fabric_type"] == selected_fabric_type]
 
+        msg = st.empty()
 
     # =============================================================================
     # ADJUSTMENT BOX
@@ -158,7 +160,10 @@ with sales:
 
         if apply_button:
             st.session_state.adjustment_applied = round(adjustment_value, 1)  # Round to 1 decimal
-            st.success(f"Adjustment of {st.session_state.adjustment_applied}% applied!")
+            
+            msg.success(f"Adjustment of {st.session_state.adjustment_applied}% applied!")
+            time.sleep(1)
+            msg.empty()
 
 
     # =============================================================================
