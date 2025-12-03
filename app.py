@@ -524,8 +524,6 @@ with purchase:
     with title_col:
         st.markdown("<h1>New Era Cap - Falcons - Purchase Plan Dashboard</h1>", unsafe_allow_html=True)
 
-    st.markdown("<h2>Dashboard Coming Soon...</h2>", unsafe_allow_html=True)
-
     # Create horizontal filter layout
     period_radio, range_bar, region_menu, sales_org_menu, sil_menu, fabric_menu, adj_col = st.columns(7)
 
@@ -573,7 +571,7 @@ with purchase:
 
     with region_menu:
         regions = ['All'] + sorted(predictions_purchase['REGION'].unique().tolist())
-        selected_region = st.selectbox("REGION", regions,key=f"{key_prefix}_region")
+        selected_region = st.selectbox("Region", regions,key=f"{key_prefix}_region")
 
         df_filtered = predictions_purchase.copy()
         if selected_region != "All":
@@ -594,10 +592,10 @@ with purchase:
     with sil_menu:        
         if regions == 'All' and sales_orgs == 'All':
             silhouettes = ['All'] + sorted(predictions_purchase['SILHOUETTE_UPDATED'].unique().tolist())
-            selected_silhouette = st.selectbox("SILHOUETTE_UPDATED", silhouettes,key=f"{key_prefix}_silhouette")
+            selected_silhouette = st.selectbox("Silhouette", silhouettes,key=f"{key_prefix}_silhouette")
         else:
             silhouettes = ['All'] + sorted(df_filtered['SILHOUETTE_UPDATED'].unique().tolist())
-            selected_silhouette = st.selectbox("SILHOUETTE_UPDATED", silhouettes,key=f"{key_prefix}_silhouette")
+            selected_silhouette = st.selectbox("Silhouette", silhouettes,key=f"{key_prefix}_silhouette")
         
         if selected_silhouette != "All":
             df_filtered = df_filtered[df_filtered["SILHOUETTE_UPDATED"] == selected_silhouette]
@@ -708,10 +706,10 @@ with purchase:
                 top_country = "N/A"
         except:
             top_country = "N/A"
-        st.metric("COUNTRY", top_country)
+        st.metric("Country", top_country)
 
     with metric_col3:
-        st.metric("REGION", selected_region if selected_region != 'All' else "All Regions")
+        st.metric("Region", selected_region if selected_region != 'All' else "All Regions")
 
     # Accuracy below in a separate smaller row
 #    st.markdown(
