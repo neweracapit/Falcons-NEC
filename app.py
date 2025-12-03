@@ -151,7 +151,7 @@ with sales:
     # ADJUSTMENT BOX
     # ============================================================================
     with adj_col:
-        adjustment_value = st.number_input("Adjustment", value=0.0, step=10.0, format="%.1f", help="Enter percentage adjustment (e.g., 5 for +5%, -3 for -3%)")
+        adjustment_value = st.number_input("Adjustment", value=0.0, step=1.0, format="%.1f", help="Enter percentage adjustment (e.g., 5 for +5%, -3 for -3%)")
         apply_button = st.button("Apply Adjustment", type="primary", use_container_width=True)
 
         # Store adjustment in session state
