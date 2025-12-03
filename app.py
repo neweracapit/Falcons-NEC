@@ -270,7 +270,7 @@ with sales:
         mode='lines+markers',
         name='Actual',
         line=dict(color='#1f77b4', width=2),
-        marker=dict(size=6)
+        marker=dict(size=8)
     ))
 
     fig_monthly.add_trace(go.Scatter(
@@ -278,7 +278,8 @@ with sales:
         y=monthly_filtered['predicted_adjusted'],
         mode='lines+markers',
         name='Predicted',
-        line=dict(color='#ff7f0e', width=2, dash='dash')
+        line=dict(color='#ff7f0e', width=2, dash='dash'),
+        marker=dict(symbol='x', size=8)
     ))
 
     fig_monthly.update_layout(
