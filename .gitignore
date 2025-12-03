@@ -5,6 +5,7 @@ predicted_data/
 # test file
 test.py
 check_ui.py
+working_app.py
 
 # imp files
 .streamlit/
