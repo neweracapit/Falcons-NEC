@@ -263,80 +263,45 @@ with sales:
     st.markdown("<br>", unsafe_allow_html=True)
     st.subheader("Monthly Sales Trend")
 
-    # Check if only one month is selected
-    num_months = len(monthly_filtered)
-
     fig_monthly = go.Figure()
+    fig_monthly.add_trace(go.Scatter(
+        x=monthly_filtered['month'],
+        y=monthly_filtered['actual'],
+        mode='lines+markers',
+        name='Actual',
+        line=dict(color='#1f77b4', width=2),
+        marker=dict(size=6)
+    ))
 
-    if num_months == 1:
-        # For single month, show as a bar chart instead
-        fig_monthly.add_trace(go.Bar(
-            x=['Actual'],
-            y=[monthly_filtered['actual'].iloc[0]],
-            name='Actual',
-            marker_color='#1f77b4',
-            text=[f"{monthly_filtered['actual'].iloc[0]:,.0f}"],
-            textposition='outside'
-        ))
-        
-        fig_monthly.add_trace(go.Bar(
-            x=['Predicted'],
-            y=[monthly_filtered['predicted_adjusted'].iloc[0]],
-            name='Predicted',
-            marker_color='#ff7f0e',
-            text=[f"{monthly_filtered['predicted_adjusted'].iloc[0]:,.0f}"],
-            textposition='outside'
-        ))
-        
-        fig_monthly.update_layout(
-            xaxis_title="",
-            yaxis_title="Units",
-            height=400,
-            showlegend=True,
-            legend=dict(
-                orientation="h", 
-                yanchor="bottom", 
-                y=-0.25,
-                xanchor="center", 
-                x=0.5
-            ),
-            margin=dict(l=0, r=0, t=30, b=80),
-            title=f"Sales for {monthly_filtered['month'].iloc[0].strftime('%B %Y')}"
-        )
-    else:
-        # For multiple months, show line chart as before
-        fig_monthly.add_trace(go.Scatter(
-            x=monthly_filtered['month'],
-            y=monthly_filtered['actual'],
-            mode='lines+markers',
-            name='Actual',
-            line=dict(color='#1f77b4', width=2),
-            marker=dict(size=6)
-        ))
+    fig_monthly.add_trace(go.Scatter(
+        x=monthly_filtered['month'],
+        y=monthly_filtered['predicted_adjusted'],
+        mode='lines+markers',
+        name='Predicted',
+        line=dict(color='#ff7f0e', width=2, dash='dash')
+    ))
 
-        fig_monthly.add_trace(go.Scatter(
-            x=monthly_filtered['month'],
-            y=monthly_filtered['predicted_adjusted'],
-            mode='lines',
-            name='Predicted',
-            line=dict(color='#ff7f0e', width=2, dash='dash')
-        ))
+    fig_monthly.update_layout(
+        xaxis_title="",
+        yaxis_title="Predicted Units",
+        hovermode='x unified',
+        height=400,
+        showlegend=True,
+        legend=dict(
+            orientation="h", 
+            yanchor="bottom", 
+            y=-0.25,
+            xanchor="center", 
+            x=0.5
+        ),
+        margin=dict(l=0, r=0, t=30, b=80)
+    )
 
-        fig_monthly.update_layout(
-            xaxis_title="",
-            yaxis_title="Predicted Units",
-            hovermode='x unified',
-            height=400,
-            showlegend=True,
-            legend=dict(
-                orientation="h", 
-                yanchor="bottom", 
-                y=-0.25,
-                xanchor="center", 
-                x=0.5
-            ),
-            margin=dict(l=0, r=0, t=30, b=80)
-        )
+    fig_monthly.update_xaxes(
+        tickmode="array",
+        tickvals=monthly_filtered['month'],
+        tickformat="%b %Y"           # Jan, Feb, Mar..
+    )
 
     st.plotly_chart(fig_monthly, use_container_width=True)
 
