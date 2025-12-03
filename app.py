@@ -13,7 +13,7 @@ st.markdown("""
 <style>
 
 div[data-baseweb="tab-list"] {
-    gap: 20px;                               /* spacing between tabs */
+    gap: 1px;                               /* spacing between tabs */
     margin-top: -20px;                        /* reduce top margin */
 }
 
@@ -67,7 +67,7 @@ with sales:
     with period_radio:
         time_period = st.radio(
             "Time Period",
-            options=["Quarterly", "Yearly"],
+            options=["Yearly", "Quarterly"],
             #horizontal=True,    
         )
 
@@ -302,6 +302,7 @@ with sales:
         tickmode="array",
         tickvals=monthly_filtered['month'],
         tickformat="%b %Y"           # Jan, Feb, Mar..
+        
     )
 
     st.plotly_chart(fig_monthly, use_container_width=True)
