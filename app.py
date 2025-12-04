@@ -372,7 +372,7 @@ with sales:
     col1, col2 = st.columns(2)
 
     with col1:
-        st.subheader("Predicted by Country")
+        st.subheader("Country")
         country_data = filtered_data.groupby('country').agg({
             'predicted_adjusted': 'sum'
         }).reset_index().sort_values('predicted_adjusted', ascending=True).tail(5)
@@ -382,7 +382,7 @@ with sales:
             y=country_data['country'],
             x=country_data['predicted_adjusted'],
             orientation='h',
-            marker_color='#1f77b4',
+            marker_color='#ff7f0e',
             text=country_data['predicted_adjusted'].apply(lambda x: f"{x/1e6:.2f}M" if x >= 1e6 else f"{x/1e3:.0f}K"),
             textposition='outside'
         ))
@@ -399,7 +399,7 @@ with sales:
         st.plotly_chart(fig_country, use_container_width=True,key=f"{key_prefix}_cont")
 
     with col2:
-        st.subheader("Predicted by Gender")
+        st.subheader("Gender")
         gender_data = filtered_data.groupby('gender').agg({
             'predicted_adjusted': 'sum'
         }).reset_index().sort_values('predicted_adjusted', ascending=True).tail(5)
@@ -409,7 +409,7 @@ with sales:
             y=gender_data['gender'],
             x=gender_data['predicted_adjusted'],
             orientation='h',
-            marker_color='#1f77b4',
+            marker_color='#ff7f0e',
             text=gender_data['predicted_adjusted'].apply(lambda x: f"{x/1e6:.2f}M" if x >= 1e6 else f"{x/1e3:.0f}K"),
             textposition='outside'
         ))
@@ -431,7 +431,7 @@ with sales:
     col3, col4 = st.columns(2)
 
     with col3:
-        st.subheader("Predicted by Sport")
+        st.subheader("Sport")
         sport_data = filtered_data.groupby('sport').agg({
             'predicted_adjusted': 'sum'
         }).reset_index().sort_values('predicted_adjusted', ascending=True).tail(5)
@@ -441,7 +441,7 @@ with sales:
             y=sport_data['sport'],
             x=sport_data['predicted_adjusted'],
             orientation='h',
-            marker_color='#1f77b4',
+            marker_color='#ff7f0e',
             text=sport_data['predicted_adjusted'].apply(lambda x: f"{x/1e6:.2f}M" if x >= 1e6 else f"{x/1e3:.0f}K"),
             textposition='outside'
         ))
@@ -458,7 +458,7 @@ with sales:
         st.plotly_chart(fig_sport, use_container_width=True,key=f"{key_prefix}_sport")
 
     with col4:
-        st.subheader("Predicted by Division")
+        st.subheader("Division")
         division_data = filtered_data.groupby('division').agg({
             'predicted_adjusted': 'sum'
         }).reset_index().sort_values('predicted_adjusted', ascending=True).tail(5)
@@ -468,7 +468,7 @@ with sales:
             y=division_data['division'],
             x=division_data['predicted_adjusted'],
             orientation='h',
-            marker_color='#1f77b4',
+            marker_color='#ff7f0e',
             text=division_data['predicted_adjusted'].apply(lambda x: f"{x/1e6:.2f}M" if x >= 1e6 else f"{x/1e3:.0f}K"),
             textposition='outside'
         ))
@@ -823,7 +823,7 @@ with purchase:
     col1, col2 = st.columns(2)
 
     with col1:
-        st.subheader("PREDICTED by COUNTRY")
+        st.subheader("COUNTRY")
         country_data = filtered_data.groupby('COUNTRY').agg({
             'predicted_adjusted': 'sum'
         }).reset_index().sort_values('predicted_adjusted', ascending=True).tail(5)
@@ -833,7 +833,7 @@ with purchase:
             y=country_data['COUNTRY'],
             x=country_data['predicted_adjusted'],
             orientation='h',
-            marker_color='#1f77b4',
+            marker_color='#ff7f0e',
             text=country_data['predicted_adjusted'].apply(lambda x: f"{x/1e6:.2f}M" if x >= 1e6 else f"{x/1e3:.0f}K"),
             textposition='outside'
         ))
@@ -850,7 +850,7 @@ with purchase:
         st.plotly_chart(fig_country, use_container_width=True,key=f"{key_prefix}_cont")
 
     with col2:
-        st.subheader("PREDICTED by GENDER")
+        st.subheader("GENDER")
         gender_data = filtered_data.groupby('GENDER').agg({
             'predicted_adjusted': 'sum'
         }).reset_index().sort_values('predicted_adjusted', ascending=True).tail(5)
@@ -860,7 +860,7 @@ with purchase:
             y=gender_data['GENDER'],
             x=gender_data['predicted_adjusted'],
             orientation='h',
-            marker_color='#1f77b4',
+            marker_color='#ff7f0e',
             text=gender_data['predicted_adjusted'].apply(lambda x: f"{x/1e6:.2f}M" if x >= 1e6 else f"{x/1e3:.0f}K"),
             textposition='outside'
         ))
@@ -882,7 +882,7 @@ with purchase:
     col3, col4 = st.columns(2)
 
     with col3:
-        st.subheader("PREDICTED by SPORT_UPDATED")
+        st.subheader("SPORT")
         sport_data = filtered_data.groupby('SPORT_UPDATED').agg({
             'predicted_adjusted': 'sum'
         }).reset_index().sort_values('predicted_adjusted', ascending=True).tail(5)
@@ -892,7 +892,7 @@ with purchase:
             y=sport_data['SPORT_UPDATED'],
             x=sport_data['predicted_adjusted'],
             orientation='h',
-            marker_color='#1f77b4',
+            marker_color='#ff7f0e',
             text=sport_data['predicted_adjusted'].apply(lambda x: f"{x/1e6:.2f}M" if x >= 1e6 else f"{x/1e3:.0f}K"),
             textposition='outside'
         ))
@@ -909,7 +909,7 @@ with purchase:
         st.plotly_chart(fig_sport, use_container_width=True,key=f"{key_prefix}_sport")
 
     with col4:
-        st.subheader("PREDICTED by DIVISION_NAME")
+        st.subheader("DIVISION NAME")
         division_data = filtered_data.groupby('DIVISION_NAME').agg({
             'predicted_adjusted': 'sum'
         }).reset_index().sort_values('predicted_adjusted', ascending=True).tail(5)
@@ -919,7 +919,7 @@ with purchase:
             y=division_data['DIVISION_NAME'],
             x=division_data['predicted_adjusted'],
             orientation='h',
-            marker_color='#1f77b4',
+            marker_color='#ff7f0e',
             text=division_data['predicted_adjusted'].apply(lambda x: f"{x/1e6:.2f}M" if x >= 1e6 else f"{x/1e3:.0f}K"),
             textposition='outside'
         ))
