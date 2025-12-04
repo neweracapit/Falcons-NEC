@@ -2,6 +2,7 @@ from streamlit_main import *
 
 import streamlit as st
 import pandas as pd
+import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
 import json
@@ -35,7 +36,8 @@ try:
     st.set_page_config(
         page_title="NewEraCap ML-Enabled",
         page_icon="https://raw.github.com/neweracapit/Falcons-NEC/blob/main/misc/favicon_box.ico",
-        layout="wide"
+        layout="wide",
+
     )
     
 except:
@@ -248,18 +250,6 @@ with sales:
 
     with metric_col3:
         st.metric("Region", selected_region if selected_region != 'All' else "All Regions")
-
-    # Accuracy below in a separate smaller row
-#    st.markdown(
-#        f"""
-#        <div style='text-align: left; margin-top: 10px; margin-bottom: 20px;'>
-#            <span style='font-size: 16px;'>
-#                🎯  Accuracy:  {accuracy:.1f}%
-#            </span>
-#        </div>
-#        """,
-#        unsafe_allow_html=True
-#    )
 
     # =============================================================================
     # MONTHLY TREND
@@ -514,7 +504,6 @@ with sales:
 with purchase:
     key_prefix = "purchase_"
     predictions_purchase = load_predictions('Purchase')
-    predictions_purchase = predictions_purchase[predictions_purchase['month'] >= '2026-01-01']
     # Logo and Title Row
     logo_col, title_col = st.columns([1, 5])
 
@@ -656,7 +645,7 @@ with purchase:
 
     # Apply adjustment to PREDICTED values
     adjustment_multiplier = 1 + (st.session_state.adjustment_applied / 100)
-    filtered_data['predicted_adjusted'] = filtered_data['PREDICTED'] * adjustment_multiplier
+    filtered_data['predicted_adjusted'] = filtered_data['predicted'] * adjustment_multiplier
 
     # =============================================================================
     # KEY METRICS
@@ -671,12 +660,14 @@ with purchase:
 
     # Aggregate by month
     monthly_filtered = filtered_data.groupby('month').agg({
-        #'actual': 'sum',   # remove
-        'PREDICTED': 'sum',
+        'ORDERED_QUANTITY': 'sum',   # remove
+        'predicted': 'sum',
         'predicted_adjusted': 'sum'
     }).reset_index()
 
     #total_actual = monthly_filtered['actual'].sum() # remove
+    monthly_filtered['ORDERED_QUANTITY'] = monthly_filtered['ORDERED_QUANTITY'].replace(0, np.nan)
+
     total_predicted = monthly_filtered['predicted_adjusted'].sum()
 
 
@@ -690,7 +681,7 @@ with purchase:
     metric_col1, metric_col2, metric_col3 = st.columns(3)
 
     with metric_col1:
-        delta_value = total_predicted - filtered_data['PREDICTED'].sum()
+        delta_value = total_predicted - filtered_data['predicted'].sum()
         st.metric("Total Units", f"{total_predicted:,.0f}", 
                 delta=f"{delta_value:+,.0f}" if st.session_state.adjustment_applied != 0 else None,
                 help="Total PREDICTED sales units (with adjustment)"
@@ -710,18 +701,6 @@ with purchase:
 
     with metric_col3:
         st.metric("Region", selected_region if selected_region != 'All' else "All Regions")
-
-    # Accuracy below in a separate smaller row
-#    st.markdown(
-#        f"""
-#        <div style='text-align: left; margin-top: 10px; margin-bottom: 20px;'>
-#            <span style='font-size: 16px;'>
-#                🎯  Accuracy:  {accuracy:.1f}%
-#            </span>
-#        </div>
-#        """,
-#        unsafe_allow_html=True
-#    )
 
     # =============================================================================
     # MONTHLY TREND
@@ -791,20 +770,20 @@ with purchase:
             font=dict(color="white")
         )
 
-#    fig_monthly.add_trace(go.Scatter(      # remove
-#        x=monthly_filtered['month'],
-#        y=monthly_filtered['actual'],
-#        mode='lines+markers',
-#        name='Actual',
-#        line=dict(color='#1f77b4', width=2),
-#        marker=dict(size=8)
-#    ))
+    fig_monthly.add_trace(go.Scatter(
+        x=monthly_filtered['month'],
+        y=monthly_filtered['ORDERED_QUANTITY'],
+        mode='lines+markers',
+        name='Actual',
+        line=dict(color='#1f77b4', width=2, dash='dash'),
+        marker=dict(symbol='circle', size=8)
+    ))
 
     fig_monthly.add_trace(go.Scatter(
         x=monthly_filtered['month'],
         y=monthly_filtered['predicted_adjusted'],
         mode='lines+markers',
-        name='PREDICTED',
+        name='PREDICTED',   
         line=dict(color='#ff7f0e', width=2, dash='dash'),
         marker=dict(symbol='x', size=8)
     ))
@@ -817,7 +796,7 @@ with purchase:
         showlegend=True,
         legend=dict(
             orientation="h", 
-            yanchor="bottom", 
+            yanchor="top", 
             y=-0.25,
             xanchor="center", 
             x=0.5
