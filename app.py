@@ -62,7 +62,7 @@ with sales:
         st.image("https://raw.githubusercontent.com/neweracapit/Falcons-NEC/main/misc/NewEraLogo.png", width=120)
 
     with title_col:
-        st.markdown("<h1>New Era Cap - Falcons - Sales Dashboard</h1>", unsafe_allow_html=True)
+        st.markdown("<h1>New Era Cap - Sales Dashboard</h1>", unsafe_allow_html=True)
 
     # Create horizontal filter layout
     period_radio, range_bar, region_menu, sales_org_menu, sil_menu, fabric_menu, adj_col = st.columns(7)
@@ -77,8 +77,8 @@ with sales:
 
     with range_bar:
         # Date range slider based on time period
-        min_date = predictions_sales['month'].min()
-        max_date = predictions_sales['month'].max()
+        min_date = predictions_sales['MONTH_START'].min()
+        max_date = predictions_sales['MONTH_START'].max()
         
         if time_period_sales == "Quarterly":
             # Get all unique quarters
@@ -97,7 +97,7 @@ with sales:
             
         else:  # Yearly
             # Get all unique years
-            all_years = sorted(predictions_sales['month'].dt.year.unique())
+            all_years = sorted(predictions_sales['MONTH_START'].dt.year.unique())
             
             selected_year_idx = st.select_slider(
                 "Select Year",
@@ -110,46 +110,46 @@ with sales:
             selected_end_date = pd.Timestamp(f"{all_years[selected_year_idx[1]]}-12-31")
 
     with region_menu:
-        regions = ['All'] + sorted(predictions_sales['region'].unique().tolist())
+        regions = ['All'] + sorted(predictions_sales['REGION'].unique().tolist())
         selected_region = st.selectbox("Region", regions,key=f"{key_prefix}_region")
 
         df_filtered = predictions_sales.copy()
         if selected_region != "All":
-            df_filtered = df_filtered[df_filtered["region"] == selected_region]
+            df_filtered = df_filtered[df_filtered["REGION"] == selected_region]
 
     with sales_org_menu:
         if regions == 'All':
-            sales_orgs = ['All'] + sorted(predictions_sales['sales_org'].unique().tolist())
+            sales_orgs = ['All'] + sorted(predictions_sales['SALES_ORG'].unique().tolist())
             selected_sales_org = st.selectbox("Sales Org", sales_orgs,key=f"{key_prefix}_sales_org")
         else:
-            sales_orgs = ['All'] + sorted(df_filtered['sales_org'].unique().tolist())
+            sales_orgs = ['All'] + sorted(df_filtered['SALES_ORG'].unique().tolist())
             selected_sales_org = st.selectbox("Sales Org", sales_orgs,key=f"{key_prefix}_sales_org")
 
         if selected_sales_org != "All":
-            df_filtered = df_filtered[df_filtered["sales_org"] == selected_sales_org]
+            df_filtered = df_filtered[df_filtered["SALES_ORG"] == selected_sales_org]
 
 
     with sil_menu:        
         if regions == 'All' and sales_orgs == 'All':
-            silhouettes = ['All'] + sorted(predictions_sales['silhouette'].unique().tolist())
+            silhouettes = ['All'] + sorted(predictions_sales['SILHOUETTE'].unique().tolist())
             selected_silhouette = st.selectbox("Silhouette", silhouettes,key=f"{key_prefix}_silhouette")
         else:
-            silhouettes = ['All'] + sorted(df_filtered['silhouette'].unique().tolist())
+            silhouettes = ['All'] + sorted(df_filtered['SILHOUETTE'].unique().tolist())
             selected_silhouette = st.selectbox("Silhouette", silhouettes,key=f"{key_prefix}_silhouette")
         
         if selected_silhouette != "All":
-            df_filtered = df_filtered[df_filtered["silhouette"] == selected_silhouette]
+            df_filtered = df_filtered[df_filtered["SILHOUETTE"] == selected_silhouette]
 
     with fabric_menu:
         if regions == 'All' and sales_orgs == 'All' and silhouettes == 'All':
-            fabric_types = ['All'] + sorted(predictions_sales['fabric_type'].unique().tolist())
+            fabric_types = ['All'] + sorted(predictions_sales['FABRIC_TYPE_CLASS'].unique().tolist())
             selected_fabric_type = st.selectbox("Fabric Type", fabric_types,key=f"{key_prefix}_fabric_type")
         else:
-            fabric_types = ['All'] + sorted(df_filtered['fabric_type'].unique().tolist())
+            fabric_types = ['All'] + sorted(df_filtered['FABRIC_TYPE_CLASS'].unique().tolist())
             selected_fabric_type = st.selectbox("Fabric Type", fabric_types,key=f"{key_prefix}_fabric_type")
 
         if selected_fabric_type != "All":
-            df_filtered = df_filtered[df_filtered["fabric_type"] == selected_fabric_type]
+            df_filtered = df_filtered[df_filtered["FABRIC_TYPE_CLASS"] == selected_fabric_type]
 
         msg = st.empty()
 
@@ -180,19 +180,19 @@ with sales:
 
     # Apply date range filter based on slider selection
     filtered_data = filtered_data[
-        (filtered_data['month'] >= selected_start_date) &
-        (filtered_data['month'] <= selected_end_date)
+        (filtered_data['MONTH_START'] >= selected_start_date) &
+        (filtered_data['MONTH_START'] <= selected_end_date)
     ]
 
     # Apply categorical filters
     if selected_region != 'All':
-        filtered_data = filtered_data[filtered_data['region'] == selected_region]
+        filtered_data = filtered_data[filtered_data['REGION'] == selected_region]
     if selected_sales_org != 'All':
-        filtered_data = filtered_data[filtered_data['sales_org'] == selected_sales_org]
+        filtered_data = filtered_data[filtered_data['SALES_ORG'] == selected_sales_org]
     if selected_silhouette != 'All':
-        filtered_data = filtered_data[filtered_data['silhouette'] == selected_silhouette]
+        filtered_data = filtered_data[filtered_data['SILHOUETTE'] == selected_silhouette]
     if selected_fabric_type != 'All':
-        filtered_data = filtered_data[filtered_data['fabric_type'] == selected_fabric_type]
+        filtered_data = filtered_data[filtered_data['FABRIC_TYPE_CLASS'] == selected_fabric_type]
 
     # Apply adjustment to predicted values
     adjustment_multiplier = 1 + (st.session_state.adjustment_applied / 100)
@@ -210,12 +210,13 @@ with sales:
         st.stop()
 
     # Aggregate by month
-    monthly_filtered = filtered_data.groupby('month').agg({
-        #'actual': 'sum',   # remove
+    monthly_filtered = filtered_data.groupby('MONTH_START').agg({
+        'actual': 'sum',   # remove
         'predicted': 'sum',
         'predicted_adjusted': 'sum'
     }).reset_index()
 
+    monthly_filtered['actual'] = monthly_filtered['actual'].replace(0, np.nan)
     #total_actual = monthly_filtered['actual'].sum() # remove
     total_predicted = monthly_filtered['predicted_adjusted'].sum()
 
@@ -236,12 +237,12 @@ with sales:
                 help="Total predicted sales units (with adjustment)"
         )
     with metric_col2:
-        # Get primary country for the filtered region
+        # Get primary country for the filtered REGION
         try:
             if selected_region != 'All' and len(filtered_data) > 0:
-                top_country = filtered_data.groupby('country')['predicted_adjusted'].sum().idxmax()
+                top_country = filtered_data.groupby('COUNTRY')['predicted_adjusted'].sum().idxmax()
             elif len(filtered_data) > 0:
-                top_country = filtered_data.groupby('country')['predicted_adjusted'].sum().idxmax()
+                top_country = filtered_data.groupby('COUNTRY')['predicted_adjusted'].sum().idxmax()
             else:
                 top_country = "N/A"
         except:
@@ -265,16 +266,16 @@ with sales:
     fig_monthly = go.Figure()
 
     # Add year splits
-    year_starts = sorted(filtered_data['month'].dt.to_period('Y').unique())
+    year_starts = sorted(filtered_data['MONTH_START'].dt.to_period('Y').unique())
     # Add label for the first year (e.g., 2023) without a line
     first_year = year_starts[0]
     first_year_start = pd.Timestamp(f"{first_year}-01-01")
 
     # Calculate Midpoint
-    df_date_check = filtered_data[filtered_data['month'].dt.year == first_year.year]
+    df_date_check = filtered_data[filtered_data['MONTH_START'].dt.year == first_year.year]
 
-    start_date = df_date_check["month"].min()
-    end_date = df_date_check["month"].max()
+    start_date = df_date_check["MONTH_START"].min()
+    end_date = df_date_check["MONTH_START"].max()
 
     mid = midpoint_date(start_date, end_date)
 
@@ -289,11 +290,11 @@ with sales:
     )
 
     for year in year_starts[1:]:
-        df_date_check = filtered_data[filtered_data['month'].dt.year == year.year]
+        df_date_check = filtered_data[filtered_data['MONTH_START'].dt.year == year.year]
         year_start = pd.Timestamp(f"{year}-01-01")
 
-        start_date = df_date_check["month"].min()
-        end_date = df_date_check["month"].max()
+        start_date = df_date_check["MONTH_START"].min()
+        end_date = df_date_check["MONTH_START"].max()
 
         mid = midpoint_date(start_date, end_date)
 
@@ -319,17 +320,17 @@ with sales:
             font=dict(color="white")
         )
 
-#    fig_monthly.add_trace(go.Scatter(      # remove
-#        x=monthly_filtered['month'],
-#        y=monthly_filtered['actual'],
-#        mode='lines+markers',
-#        name='Actual',
-#        line=dict(color='#1f77b4', width=2),
-#        marker=dict(size=8)
-#    ))
+    fig_monthly.add_trace(go.Scatter(      # remove
+        x=monthly_filtered['MONTH_START'],
+        y=monthly_filtered['actual'],
+        mode='lines+markers',
+        name='Actual',
+        line=dict(color='#1f77b4', width=2),
+        marker=dict(size=8)
+    ))
 
     fig_monthly.add_trace(go.Scatter(
-        x=monthly_filtered['month'],
+        x=monthly_filtered['MONTH_START'],
         y=monthly_filtered['predicted_adjusted'],
         mode='lines+markers',
         name='Predicted',
@@ -355,7 +356,7 @@ with sales:
 
     fig_monthly.update_xaxes(
         tickmode="array",
-        tickvals=monthly_filtered['month'],
+        tickvals=monthly_filtered['MONTH_START'],
         tickformat="%b %Y"           # Jan, Feb, Mar..
         
     )
@@ -373,13 +374,13 @@ with sales:
 
     with col1:
         st.subheader("Country")
-        country_data = filtered_data.groupby('country').agg({
+        country_data = filtered_data.groupby('COUNTRY').agg({
             'predicted_adjusted': 'sum'
         }).reset_index().sort_values('predicted_adjusted', ascending=True).tail(5)
         
         fig_country = go.Figure()
         fig_country.add_trace(go.Bar(
-            y=country_data['country'],
+            y=country_data['COUNTRY'],
             x=country_data['predicted_adjusted'],
             orientation='h',
             marker_color='#ff7f0e',
@@ -400,13 +401,13 @@ with sales:
 
     with col2:
         st.subheader("Gender")
-        gender_data = filtered_data.groupby('gender').agg({
+        gender_data = filtered_data.groupby('GENDER').agg({
             'predicted_adjusted': 'sum'
         }).reset_index().sort_values('predicted_adjusted', ascending=True).tail(5)
         
         fig_gender = go.Figure()
         fig_gender.add_trace(go.Bar(
-            y=gender_data['gender'],
+            y=gender_data['GENDER'],
             x=gender_data['predicted_adjusted'],
             orientation='h',
             marker_color='#ff7f0e',
@@ -432,13 +433,13 @@ with sales:
 
     with col3:
         st.subheader("Sport")
-        sport_data = filtered_data.groupby('sport').agg({
+        sport_data = filtered_data.groupby('SPORT').agg({
             'predicted_adjusted': 'sum'
         }).reset_index().sort_values('predicted_adjusted', ascending=True).tail(5)
         
         fig_sport = go.Figure()
         fig_sport.add_trace(go.Bar(
-            y=sport_data['sport'],
+            y=sport_data['SPORT'],
             x=sport_data['predicted_adjusted'],
             orientation='h',
             marker_color='#ff7f0e',
@@ -459,13 +460,13 @@ with sales:
 
     with col4:
         st.subheader("Division")
-        division_data = filtered_data.groupby('division').agg({
+        division_data = filtered_data.groupby('DIVISION_NAME').agg({
             'predicted_adjusted': 'sum'
         }).reset_index().sort_values('predicted_adjusted', ascending=True).tail(5)
         
         fig_division = go.Figure()
         fig_division.add_trace(go.Bar(
-            y=division_data['division'],
+            y=division_data['DIVISION_NAME'],
             x=division_data['predicted_adjusted'],
             orientation='h',
             marker_color='#ff7f0e',
@@ -494,7 +495,7 @@ with sales:
         f"Last Updated: {pd.Timestamp.now().strftime('%Y-%m-%d %H:%M:%S')}"
         f"</p>",
         unsafe_allow_html=True
-    )    
+    )
 
 # =============================================================================
 # Purchase Start
@@ -511,7 +512,7 @@ with purchase:
         st.image("https://raw.githubusercontent.com/neweracapit/Falcons-NEC/main/misc/NewEraLogo.png", width=120)
 
     with title_col:
-        st.markdown("<h1>New Era Cap - Falcons - Purchase Plan Dashboard</h1>", unsafe_allow_html=True)
+        st.markdown("<h1>New Era Cap - Purchase Plan Dashboard</h1>", unsafe_allow_html=True)
 
     # Create horizontal filter layout
     period_radio, range_bar, region_menu, sales_org_menu, sil_menu, fabric_menu, adj_col = st.columns(7)

@@ -93,7 +93,7 @@ def load_predictions(type) -> pd.DataFrame:
 
     if type == 'Sales':
         predictions = pd.read_csv(sales_path)
-        predictions['month'] = pd.to_datetime(predictions['month'])
+        predictions['MONTH_START'] = pd.to_datetime(predictions['MONTH_START'])
     elif type == 'Purchase':
         predictions = pd.read_csv(purchase_path)
         predictions['month'] = pd.to_datetime(predictions['PO_CREATED_DATE'])
