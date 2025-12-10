@@ -476,7 +476,8 @@ with sales:
             filtered_data = filtered_data[filtered_data['SILHOUETTE'] == selected_silhouette]
 
         # Apply adjustment to predicted values
-        adjustment_multiplier = 1 + (st.session_state.adjustment_applied / 100)
+        percentage_value = st.session_state.adjustment_applied
+        adjustment_multiplier = 1 + (percentage_value / 100)
         filtered_data['predicted_adjusted'] = filtered_data['predicted'] * adjustment_multiplier
 
         # =============================================================================
@@ -642,6 +643,16 @@ with sales:
             line=dict(color='#ff7f0e', width=2, dash='dash'),
             marker=dict(symbol='x', size=8)
         ))
+
+        if percentage_value != 0 :        
+            fig_monthly.add_trace(go.Scatter(
+                x=monthly_filtered['MONTH_START'],
+                y=monthly_filtered['predicted'],
+                mode='lines+markers',
+                name='Predicted',
+                line=dict(color="#42ff0e", width=2, dash='dash'),
+                marker=dict(symbol='x', size=8)
+            ))
 
         fig_monthly.update_layout(
             xaxis_title="",
@@ -1394,6 +1405,16 @@ with purchase:
             line=dict(color='#ff7f0e', width=2, dash='dash'),
             marker=dict(symbol='x', size=8)
         ))
+
+        if st.session_state.adjustment_applied != 0 :        
+            fig_monthly.add_trace(go.Scatter(
+                x=monthly_filtered['month'],
+                y=monthly_filtered['predicted'],
+                mode='lines+markers',
+                name='Predicted',
+                line=dict(color="#42ff0e", width=2, dash='dash'),
+                marker=dict(symbol='x', size=8)
+            ))
 
         fig_monthly.update_layout(
             xaxis_title="",
