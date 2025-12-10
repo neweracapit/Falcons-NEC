@@ -4,3 +4,4 @@ azure-storage-blob
 azure-identity
 plotly
 python-dotenv
+kaleido
