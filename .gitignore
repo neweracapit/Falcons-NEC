@@ -1,11 +1,14 @@
 # Data folder ignore
 data/
 predicted_data/
+historical_data/
 
 # test file
 test.py
 check_ui.py
 working_app.py
+po_past.py
+sales_past.py
 
 # imp files
 .streamlit/
