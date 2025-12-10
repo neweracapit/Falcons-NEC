@@ -19,18 +19,15 @@ from utils.ui import render_header
 from streamlit_main import *
 
 url = 'https://raw.githubusercontent.com/neweracapit/Falcons-NEC/main/misc/new_era_cap_cover.jpeg'
-#set_bg_url(url=url,opacity=0.85)
+set_bg_url(url=url,opacity=0.85)
 
-#try:
-#    st.set_page_config(
-#        page_title="NewEraCap ML-Enabled",
-#        page_icon="https://raw.github.com/neweracapit/Falcons-NEC/blob/main/misc/favicon_box.ico",
-#        layout="wide",
-#
-#    )    
-#    
-#except:
-#    print("Error Loading Background image")
+
+st.set_page_config(
+    page_title="NewEraCap ML-Enabled",
+    page_icon="https://raw.github.com/neweracapit/Falcons-NEC/blob/main/misc/favicon_box.ico",
+    layout="wide",
+
+)    
 
 
 # Tabs Purchase and Sales

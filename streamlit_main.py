@@ -10,36 +10,27 @@ import os
 from azure.storage.blob import BlobServiceClient
 
 
-def set_bg_url(url, opacity=0.3):
+def set_bg_url(url, opacity=0.85):
+    st.markdown(f"""
+    <style>
+    /* Background wrapper independent of Streamlit layout */
+    .stBackground {{
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-image: url('{url}');
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        opacity: {opacity};
+        z-index: -1 !important;
+    }}
+    </style>
 
-    st.markdown(
-        f"""
-        <style>
-        .stApp {{
-            background-image: url("{url}");
-            background-size: cover;
-            background-repeat: no-repeat;
-            background-attachment: fixed;
-            position: relative;
-        }}
-
-        /* Overlay */
-        .stApp::before {{
-            content: "";
-            position: absolute;
-            inset: 0;
-            background: rgba(0,0,0,{opacity});
-            z-index: 0;
-        }}
-
-        .stApp > * {{
-            position: relative;
-            z-index: 1;
-        }}
-        </style>
-        """,
-        unsafe_allow_html=True
-    )
+    <div class="stBackground"></div>
+    """, unsafe_allow_html=True)
 
 # Authenticate and Get data from Azure Glob
 def authenticate_azure():
