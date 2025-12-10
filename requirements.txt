@@ -5,3 +5,4 @@ azure-identity
 plotly
 python-dotenv
 kaleido
+openai
