@@ -364,6 +364,10 @@ with sales:
                 #horizontal=True,    
                 key=f"{key_prefix}_time_radio"
             )
+        
+            msg_accuracy = st.empty()   
+            msg_accuracy.write("Trained Model Accuracy: 84.92%")
+
 
         with range_bar:
             # Date range slider based on time period
@@ -1106,6 +1110,8 @@ with purchase:
                 #horizontal=True,    
                 key=f"{key_prefix}_time_radio"
             )
+            msg_accuracy = st.empty()   
+            msg_accuracy.write("Trained Model Accuracy: 86.52%")            
 
         with range_bar:
             # Date range slider based on time period
