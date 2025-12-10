@@ -3,6 +3,8 @@ import base64
 from dotenv import load_dotenv
 load_dotenv()
 import pandas as pd
+import numpy as np
+import time
 
 import os
 from azure.storage.blob import BlobServiceClient
@@ -51,12 +53,13 @@ def authenticate_azure():
     container_sales = blob_service_client.get_container_client('predictions-sales')
     container_purchase_historical = blob_service_client.get_container_client('purchase-historical')
     container_sales_historical = blob_service_client.get_container_client('sales-historical')
-    return container_sales, container_purchase, container_purchase_historical, container_sales_historical
+    container_openai = blob_service_client.get_container_client('openai-data')
+    return container_sales, container_purchase, container_purchase_historical, container_sales_historical, container_openai
 
 def load_data():    
 
     # Get azure clients
-    container_sales, container_purchase, _, _ = authenticate_azure()
+    container_sales, container_purchase, _, _, _ = authenticate_azure()
 
     local_path = './predicted_data/'
     os.makedirs(local_path, exist_ok=True)
@@ -109,7 +112,7 @@ def download_historical_data() -> pd.DataFrame:
     local_path_historical = './historical_data/'
     os.makedirs(local_path_historical, exist_ok=True)
 
-    _, _, container_purchase_historical, container_sales_historical = authenticate_azure()
+    _, _, container_purchase_historical, container_sales_historical, _ = authenticate_azure()
 
     # Download and return Sales Historical
     # List blobs in Purchase Historical
@@ -160,164 +163,165 @@ from openai import OpenAI
 import base64
 from PIL import Image
 
+def load_openai_data():
+    _, _, _, _, container_openai = authenticate_azure()
+
+    local_path = './predicted_data/'
+    os.makedirs(local_path, exist_ok=True)
+
+    # Download and return Sales
+    blob_list = list(container_openai.list_blobs())
+    latest_openai_blob = max(blob_list, key=lambda b: b.last_modified)
+    print("Latest Sales file:", latest_openai_blob.name)
+
+    local_file_name = f'latest_openai_dataset.csv'
+    download_path_openai = local_path + local_file_name
+
+    with open(file=download_path_openai, mode="wb") as download_file:
+        download_file.write(container_openai.download_blob(latest_openai_blob.name).readall())
+
+    openai_df = pd.read_csv(download_path_openai)
+    openai_df['PO_CREATED_DATE'] = pd.to_datetime(openai_df['PO_CREATED_DATE'], errors='coerce')
+    openai_df['YEAR'] = openai_df['PO_CREATED_DATE'].dt.year
+    openai_df['QUARTER'] = openai_df['PO_CREATED_DATE'].dt.quarter
+    openai_df['MONTH'] = openai_df['PO_CREATED_DATE'].dt.month
+
+    return openai_df
+
+
 def get_openai_client():
     OPEN_AI_API_KEY = st.secrets['OPENAI_API_KEY']
     client = OpenAI()
 
     return client
 
-def generate_image_description(image_url: str):
-    client = get_openai_client()
 
-    vision_response = client.chat.completions.create(
-    model="gpt-4o-mini",
-    messages=[
-        {
-            "role": "user",
-            "content": [
-                {"type": "text", "text": "Describe this forecast graph in detail."},
-                {"type": "image_url", "image_url": {"url": image_url}}
-            ]
+import pandas as pd
+import numpy as np
+import ast
+
+def compute_group_overview(filtered_df):
+
+    pos_driver_list = []
+    pos_value_list = []
+    neg_driver_list = []
+    neg_value_list = []
+    magnitude_list = []
+
+    for shap in filtered_df["shap_summary"]:
+
+        # 🔥 FIX 1: Convert whole shap object from str → dict
+        if isinstance(shap, str):
+            try:
+                shap = ast.literal_eval(shap)
+            except:
+                continue  # skip bad rows
+
+        # 🔥 FIX 2: Extract and convert their subfields safely
+        top_pos = shap.get("top_positive", {})
+        top_neg = shap.get("top_negative", {})
+
+        if isinstance(top_pos, str):
+            try:
+                top_pos = ast.literal_eval(top_pos)
+            except:
+                top_pos = {}
+
+        if isinstance(top_neg, str):
+            try:
+                top_neg = ast.literal_eval(top_neg)
+            except:
+                top_neg = {}
+
+        # --- Extract top positive drivers ---
+        for feat, val in top_pos.items():
+            pos_driver_list.append(feat)
+            pos_value_list.append(val)
+
+        # --- Extract top negative drivers ---
+        for feat, val in top_neg.items():
+            neg_driver_list.append(feat)
+            neg_value_list.append(val)
+
+        # Magnitude
+        magnitude_list.append(shap.get("shap_magnitude", 0))
+
+    # Handle empty lists gracefully
+    if not pos_driver_list or not neg_driver_list:
+        return {
+            "dominant_positive_driver": None,
+            "avg_positive_influence": 0,
+            "dominant_negative_driver": None,
+            "avg_negative_influence": 0,
+            "avg_shap_magnitude": float(np.mean(magnitude_list)) if magnitude_list else 0
         }
-    ]
+
+    # --- Summary Computation ---
+    dominant_pos = pd.Series(pos_driver_list).value_counts().idxmax()
+    dominant_neg = pd.Series(neg_driver_list).value_counts().idxmax()
+
+    avg_pos_value = float(np.mean([v for f, v in zip(pos_driver_list, pos_value_list) if f == dominant_pos]))
+    avg_neg_value = float(np.mean([v for f, v in zip(neg_driver_list, neg_value_list) if f == dominant_neg]))
+
+    avg_magnitude = float(np.mean(magnitude_list))
+
+    return {
+        "dominant_positive_driver": dominant_pos,
+        "avg_positive_influence": avg_pos_value,
+        "dominant_negative_driver": dominant_neg,
+        "avg_negative_influence": avg_neg_value,
+        "avg_shap_magnitude": avg_magnitude
+    }
+
+
+def build_insight_prompt(summary_dict, level="row"):
+    return f"""
+            You are an AI assistant helping to explain machine learning demand forecasting outputs.
+            The model is LightGBM, and SHAP values show the contribution of each feature to the forecast.
+
+            ### CONTEXT
+            - SHAP positive values increase the forecast.
+            - SHAP negative values decrease the forecast.
+            - SHAP magnitude indicates the overall influence and volatility of the prediction.
+
+            ### TASK
+            Provide a clear, simple, business-friendly explanation of the forecast drivers.
+
+            ### INPUT (SHAP SUMMARY)
+            {summary_dict}
+
+            ### INSTRUCTIONS
+            1. Summarize the most important positive and negative drivers.
+            2. Give a simple explanation of how these features relate to increased or decreased demand.
+            3. For group-level summaries, explain the general behavior of the segment or year.
+            4. Avoid technical jargon.
+            5. Keep it concise but meaningful.
+
+            ### OUTPUT
+            A business-friendly explanation.
+            """
+
+def generate_llm_review(summary_dict, level="row", model="gpt-4.1-mini"): 
+    client = OpenAI()
+    prompt = build_insight_prompt(summary_dict, level)
+
+    response = client.chat.completions.create(
+        model=model,
+        messages=[
+            {"role": "system", "content": "You are an expert at explaining machine learning forecast drivers simply and clearly."},
+            {"role": "user", "content": prompt}
+        ],
+        temperature=0.3
     )
 
-    forecast_description = vision_response.choices[0].message.content
-    return forecast_description 
-
-def generate_insights_w_image(historical_json, image_url):
-    client = get_openai_client()
-    
-    forecast_description = generate_image_description(image_url)
-    analysis_prompt = f"""
-    You are a supply-chain forecasting analyst.
-
-    Here is the forecast description generated from the image:
-    {forecast_description}
-
-    Here is 5 years of historical data (JSON):
-    {historical_json}
-
-    TASK:
-    1. Compare the forecasted trend to historical trends.
-    2. Check if seasonality in the forecast matches history.
-    3. Identify spikes or dips that break historical patterns.
-    4. Detect overprediction or underprediction.
-    5. Identify high-risk months or years.
-    6. Provide 5–8 actionable business recommendations.
-
-    Format your answer as:
-
-    ### Trend Comparison
-    ...
-
-    ### Seasonality Comparison
-    ...
-
-    ### Anomalies
-    ...
-
-    ### Risks
-    ...
-
-    ### Recommendations
-    ...
-
-    Stop after recommendations. 
-    """
-
-    # Use GPT-5-nano for cheap reasoning
-    analysis_response = client.responses.create(
-        model="gpt-5-nano",
-        input=analysis_prompt
-    )
-
-    # Extract text
-    analysis_text = analysis_response.output_text
-
-    # Extract Concise
-    # Use GPT-5-nano for cheap reasoning
-    analysis_response = client.responses.create(
-        model="gpt-5-nano",
-        input=f"You are a supply-chain forecasting analyst. Create concise version of the following analysis, maintain the same sections:\n{analysis_text}. Stop after recommendations."
-        )
-
-    # Extract text
-    analysis_text_concise = analysis_response.output_text
-
-    print("\n--- FINAL FORECAST vs HISTORY ANALYSIS ---\n")
-    
-    return analysis_text, analysis_text_concise
-
-def generate_insights_wo_image(historical_json, forecast_json):
-    client = get_openai_client()
-    
-    analysis_prompt = f"""
-    You are a supply-chain forecasting analyst.
-
-    Here is future forecasts from 2025 to 2028:
-    {forecast_json}
-
-    Here is 5 years of historical data (JSON):
-    {historical_json}
-
-    TASK:
-    1. Compare the forecasted trend to historical trends.
-    2. Identify spikes or dips that break historical patterns.
-    3. Provide 5–8 actionable business recommendations.
-
-    Format your answer as:
-
-    ### Trend Comparison
-    ...
-
-    ### Anomalies
-    ...
-
-    ### Recommendations
-    ...
-
-    Stop after recommendations and do not ask anything else. 
-    """
-
-    # Use GPT-5-nano for cheap reasoning
-    analysis_response = client.responses.create(
-        model="gpt-5-nano",
-        input=analysis_prompt
-    )
-
-    # Extract text
-    analysis_text = analysis_response.output_text
-    analysis_text = beautify_output(analysis_text)
-
-    return analysis_text
-
-def generate_concise_insights(analysis_text):
-        # Extract Concise
-    client = get_openai_client()
-    # Use GPT-5-nano for cheap reasoning
-    analysis_response = client.responses.create(
-        model="gpt-5-nano",
-        input=f"You are a supply-chain forecasting analyst. Create concise version of the following analysis, maintain the same sections:\n{analysis_text}. Stop after recommendations."
-        )
-
-        # Extract text
-    analysis_text_concise = analysis_response.output_text
-    analysis_text_concise = beautify_output(analysis_text_concise)
-
-def beautify_output(llm_text):
-    import re
-    sections = re.split(r"### ", llm_text)
-    parsed = {}
-
-    for s in sections:
-        if not s.strip():
-            continue
-        title, content = s.split("\n", 1)
-        parsed[title.strip()] = content.strip()
-
-    return parsed
+    # Updated: use .content instead of ["content"]
+    return response.choices[0].message.content
 
 
-
-
+def typewriter(text, speed=0.01):
+    placeholder = st.empty()
+    typed = ""
+    for char in text:
+        typed += char
+        placeholder.markdown(typed)
+        time.sleep(speed)
