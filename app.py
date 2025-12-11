@@ -1109,7 +1109,7 @@ with purchase:
 
     with forecast:
         # Create horizontal filter layout
-        period_radio, range_bar, region_menu, sales_org_menu, sil_menu, adj_col = st.columns(6)
+        period_radio, range_bar, region_menu, sales_org_menu, sil_menu, season_consol, adj_col = st.columns(7)
 
         with period_radio:
             time_period_sales = st.radio(
@@ -1185,6 +1185,17 @@ with purchase:
             
             if selected_silhouette != "All":
                 df_filtered = df_filtered[df_filtered["SILHOUETTE_UPDATED"] == selected_silhouette]
+
+        with season_consol:
+            if regions == 'All' and sales_orgs == 'All' and sil_menu == 'All':
+                seasons = ['All'] + sorted(predictions_purchase['SEASON_CONSOLIDATION'].unique().tolist())
+                selected_season = st.selectbox("Season Consolidation", seasons,key=f"{key_prefix}_season_consol")
+            else:
+                seasons = ['All'] + sorted(df_filtered['SEASON_CONSOLIDATION'].unique().tolist())
+                selected_season = st.selectbox("Season Consolidation", seasons,key=f"{key_prefix}_season_consol")
+            
+            if selected_season != "All":
+                df_filtered = df_filtered[df_filtered["SEASON_CONSOLIDATION"] == selected_season]
 
             msg = st.empty()
 
@@ -1504,7 +1515,7 @@ with purchase:
 
         st.markdown("<br>", unsafe_allow_html=True)
 
-        # Row 2: SPORT_UPDATED and DIVISION_NAME
+        # Row 2: SPORT_UPDATED and SALES_ORG
         col3, col4 = st.columns(2)
 
         with col3:
@@ -1539,6 +1550,8 @@ with purchase:
             division_data = filtered_data.groupby('SALESORG').agg({
                 'predicted_adjusted': 'sum'
             }).reset_index().sort_values('predicted_adjusted', ascending=True).tail(5)
+        
+            division_data = division_data[division_data['SALESORG'] != 'Unknown']
             
             fig_division = go.Figure()
             fig_division.add_trace(go.Bar(
