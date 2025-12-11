@@ -294,12 +294,12 @@ with sales:
 
         # layout: 3 rows x 2 cols
         rows = [
-            ("Top countries", country_col, "horizontal"),
-            ("Top sales orgs", salesorg_col, "horizontal"),
-            ("Product division mix", proddiv_col, "vertical"),
-            ("Silhouette mix", silhouette_col, "vertical"),
-            ("Gender split", gender_col, "horizontal"),
-            ("Sport mix", sport_col, "horizontal"),
+            ("Top Countries", country_col, "horizontal"),
+            ("Top Sales Org", salesorg_col, "horizontal"),
+            ("Product Divison", proddiv_col, "vertical"),
+            ("Silhouette", silhouette_col, "vertical"),
+            ("Gender", gender_col, "horizontal"),
+            ("Sport", sport_col, "horizontal"),
         ]
 
         # render grid
@@ -646,7 +646,7 @@ with sales:
                 x=monthly_filtered['MONTH_START'],
                 y=monthly_filtered['predicted'],
                 mode='lines+markers',
-                name='Predicted',
+                name='Adjusted Prediction',
                 line=dict(color="#42ff0e", width=2, dash='dash'),
                 marker=dict(symbol='x', size=8)
             ))
@@ -1312,13 +1312,13 @@ with purchase:
         # =============================================================================
 
         st.markdown("<br>", unsafe_allow_html=True)
-        col1, col2 = st.columns([7, 1])
+        col1, col2 = st.columns([10, 1])
 
         with col1:
             st.subheader("Monthly Purchase Trend")
 
         with col2:
-            run_insight = st.button("Get OpenAI Insight")
+            run_insight = st.button("Get Insights")
 
         def midpoint_date(start_date, end_date):
         # """Return the midpoint timestamp between two dates."""
@@ -1426,7 +1426,7 @@ with purchase:
                 x=monthly_filtered['month'],
                 y=monthly_filtered['predicted'],
                 mode='lines+markers',
-                name='Predicted',
+                name='Adjusted Prediction',
                 line=dict(color="#42ff0e", width=2, dash='dash'),
                 marker=dict(symbol='x', size=8)
             ))
