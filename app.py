@@ -1108,6 +1108,7 @@ with purchase:
                         st.plotly_chart(fig, use_container_width=True)        
 
     with forecast:
+        openai_df = load_openai_data()
         # Create horizontal filter layout
         period_radio, range_bar, region_menu, sales_org_menu, sil_menu, season_consol, adj_col = st.columns(7)
 
@@ -1311,7 +1312,13 @@ with purchase:
         # =============================================================================
 
         st.markdown("<br>", unsafe_allow_html=True)
-        st.subheader("Monthly Sales Trend")
+        col1, col2 = st.columns([7, 1])
+
+        with col1:
+            st.subheader("Monthly Purchase Trend")
+
+        with col2:
+            run_insight = st.button("Get OpenAI Insight")
 
         def midpoint_date(start_date, end_date):
         # """Return the midpoint timestamp between two dates."""
@@ -1448,6 +1455,30 @@ with purchase:
         )
 
         st.plotly_chart(fig_monthly, use_container_width=True,key=f"{key_prefix}_main_plot")
+
+        if run_insight:
+            openai_filtered_data = openai_df.copy()
+
+            # Apply date range filter based on slider selection
+            openai_filtered_data = openai_filtered_data[
+                (openai_filtered_data['PO_CREATED_DATE'] >= selected_start_date) &
+                (openai_filtered_data['PO_CREATED_DATE'] <= selected_end_date)
+            ]
+
+            # Apply categorical filters
+            if selected_region != 'All':
+                openai_filtered_data = openai_filtered_data[openai_filtered_data['REGION'] == selected_region]
+            if selected_sales_org != 'All':
+                openai_filtered_data = openai_filtered_data[openai_filtered_data['SALES_ORG_NAME'] == selected_sales_org]
+            if selected_silhouette != 'All':
+                openai_filtered_data = openai_filtered_data[openai_filtered_data['SILHOUETTE_UPDATED'] == selected_silhouette]            
+            
+            with st.spinner("Generating Insights..."):
+                group_summary = compute_group_overview(openai_filtered_data)
+                group_insight = generate_llm_review(group_summary,level="group")
+
+            typewriter(group_insight)
+
 
         # =============================================================================
         # BREAKDOWN CHARTS - 2x2 GRID
