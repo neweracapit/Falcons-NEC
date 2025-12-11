@@ -1317,9 +1317,6 @@ with purchase:
         with col1:
             st.subheader("Monthly Purchase Trend")
 
-        with col2:
-            run_insight = st.button("Get Insights")
-
         def midpoint_date(start_date, end_date):
         # """Return the midpoint timestamp between two dates."""
             return start_date + (end_date - start_date) / 2
@@ -1455,29 +1452,6 @@ with purchase:
         )
 
         st.plotly_chart(fig_monthly, use_container_width=True,key=f"{key_prefix}_main_plot")
-
-        if run_insight:
-            openai_filtered_data = openai_df.copy()
-
-            # Apply date range filter based on slider selection
-            openai_filtered_data = openai_filtered_data[
-                (openai_filtered_data['PO_CREATED_DATE'] >= selected_start_date) &
-                (openai_filtered_data['PO_CREATED_DATE'] <= selected_end_date)
-            ]
-
-            # Apply categorical filters
-            if selected_region != 'All':
-                openai_filtered_data = openai_filtered_data[openai_filtered_data['REGION'] == selected_region]
-            if selected_sales_org != 'All':
-                openai_filtered_data = openai_filtered_data[openai_filtered_data['SALES_ORG_NAME'] == selected_sales_org]
-            if selected_silhouette != 'All':
-                openai_filtered_data = openai_filtered_data[openai_filtered_data['SILHOUETTE_UPDATED'] == selected_silhouette]            
-            
-            with st.spinner("Generating Insights..."):
-                group_summary = compute_group_overview(openai_filtered_data)
-                group_insight = generate_llm_review(group_summary,level="group")
-
-            typewriter(group_insight)
 
 
         # =============================================================================
