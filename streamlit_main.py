@@ -273,42 +273,153 @@ def compute_group_overview(filtered_df):
         "avg_shap_magnitude": avg_magnitude
     }
 
+def build_historical_summary(df: pd.DataFrame,):
+    target_col = "PURCHASE_COUNT"
+    categorical_features = [
+        "SPORT",
+        "SEASON",
+        "GENDER",
+        "SILHOUETTE"
+    ]
 
-def build_insight_prompt(summary_dict, level="row"):
-    return f"""
-            You are an AI assistant helping to explain machine learning demand forecasting outputs.
-            The model is LightGBM, and SHAP values show the contribution of each feature to the forecast.
+    """
+    Builds an LLM-friendly driver summary from historical data.
+    
+    Parameters
+    ----------
+    df : pd.DataFrame
+        Historical dataset
+    categorical_features : list
+        List of categorical column names (e.g. ['SPORT','SEASON','GENDER'])
+    target_col : str
+        Target variable (default = PURCHASE_COUNT)
 
-            ### CONTEXT
-            - SHAP positive values increase the forecast.
-            - SHAP negative values decrease the forecast.
-            - SHAP magnitude indicates the overall influence and volatility of the prediction.
+    Returns
+    -------
+    dict
+        Compact driver summary for LLM consumption
+    """
 
-            ### TASK
-            Provide a clear, simple, business-friendly explanation of the forecast drivers.
+    summary_grp = {}
+    summary_main = {}
+    total_demand = df[target_col].sum()
 
-            ### INPUT (SHAP SUMMARY)
-            {summary_dict}
+    
+    for feature in categorical_features:
+        
+        grp = (
+            df.groupby(feature)[target_col]
+            .sum()
+            .reset_index()
+        )
+        grp = grp[grp[feature] != 'Others']
+        
+        feature_values = grp[feature].unique()
 
-            ### INSTRUCTIONS
-            1. Summarize the most important positive and negative drivers.
-            2. Give a simple explanation of how these features relate to increased or decreased demand.
-            3. For group-level summaries, explain the general behavior of the segment or year.
-            4. Avoid technical jargon.
-            5. Keep it concise but meaningful.
+        for grp_val in feature_values:
+            grp_df = grp[grp[feature] == grp_val]
 
-            ### OUTPUT
-            A business-friendly explanation.
-            """
+            avg_val = grp_df[target_col].mean()
+            std_val = grp_df[target_col].std()
+            share_pct = (grp_df[target_col].sum() / total_demand) * 100
 
-def generate_llm_review(summary_dict, level="row", model="gpt-4.1-mini"): 
-    client = OpenAI()
-    prompt = build_insight_prompt(summary_dict, level)
+            # Relative strength (based on share of demand)
+            if share_pct > 60:
+                strength = "high"
+            elif share_pct > 25:
+                strength = "medium"
+            else:
+                strength = "low"
+            
+            # Variation (coefficient of variation)
+            cv = std_val / avg_val if avg_val > 0 else 0
+            if cv > 1:
+                variation = "high"
+            elif cv > 0.4:
+                variation = "medium"
+            else:
+                variation = "low"
+
+            
+            summary_grp[grp_val] = {
+                "avg_purchase": round(float(avg_val), 2),
+                "share_of_demand_pct": round(float(share_pct), 1),
+                "relative_strength": strength,
+                "variation": variation
+            }
+        summary_main[feature] = summary_grp
+
+    return summary_main
+
+
+def build_insight_prompt(summary_dict,type, level="row"):
+    if type == 'Forecast':
+        return f"""
+                You are an AI assistant helping to explain machine learning demand forecasting outputs to Non-Technical Supply Chain Team.
+                The model is LightGBM, and SHAP values show the contribution of each feature to the forecast.
+
+                ### CONTEXT
+                - SHAP positive values increase the forecast.
+                - SHAP negative values decrease the forecast.
+                - SHAP magnitude indicates the overall influence and volatility of the prediction.
+
+                ### TASK
+                Provide a clear, simple, business-friendly explanation of the forecast drivers.
+                And avoid stating technical term, instead what that term means.
+
+                ### INPUT (SHAP SUMMARY)
+                {summary_dict}
+
+                ### INSTRUCTIONS
+                1. Summarize the most important positive and negative drivers.
+                2. Give a simple explanation of how these features relate to increased or decreased demand.
+                3. For group-level summaries, explain the general behavior of the segment or year.
+                4. Avoid technical jargon.
+                5. Keep it concise but meaningful.
+
+                ### OUTPUT
+                An explanation for Non-Techincal Supply Chain and Business Stake Holders.
+                """
+    elif type == 'Historical':
+        return f"""
+        You are a supply-chain demand forecasting analyst.
+
+        You are given a compact historical driver summary derived from purchase data.
+        Each driver includes:
+        - avg_purchase: average demand contribution
+        - share_of_demand_pct: share of total demand
+        - relative_strength: high / medium / low
+        - variation: high / medium / low
+
+        HISTORICAL DRIVER SUMMARY:
+        {summary_dict}
+
+        TASK:
+        Generate a clear, concise, business-friendly explanation of demand drivers.
+
+        INSTRUCTIONS:
+        1. Identify the strongest and weakest demand drivers.
+        2. Explain how each key driver influences demand in plain language.
+        3. Highlight drivers with high variation as potential planning risks.
+        4. Avoid technical or statistical jargon.
+        5. Do NOT repeat the raw numbers unless necessary.
+        6. Focus on interpretation and business impact, not data processing.
+        7. Keep the response to 5–8 sentences.
+
+        OUTPUT FORMAT:
+        Write a short narrative paragraph suitable for supply-chain planners and business stakeholders.
+        """
+
+
+def generate_llm_review(summary_dict, type, level="row", model="gpt-4.1-mini"):
+
+    client = get_openai_client()
+    prompt = build_insight_prompt(summary_dict, type, level)
 
     response = client.chat.completions.create(
         model=model,
         messages=[
-            {"role": "system", "content": "You are an expert at explaining machine learning forecast drivers simply and clearly."},
+            {"role": "system", "content": "You are an expert at communicating with non-tech Supply Chain and Business Stake holder."},
             {"role": "user", "content": prompt}
         ],
         temperature=0.3

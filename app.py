@@ -69,10 +69,6 @@ with sales:
     historical, forecasts = st.tabs(['Historical', 'Forecast'])
 
     with historical:
-        st.subheader("Query the MCP Forecast Server")
-        query = st.text_input("Enter a simple question (e.g. 'Top 5 silhouettes in Europe')")
-
-
         df = load_historical_data('Sales')
         colmap = build_map(df)
         df_f, filters = render_filters_and_filter_df(df, colmap, page_id="sales_past")
@@ -919,7 +915,13 @@ with purchase:
 
 
         # ---------- Time-series (monthly) ----------
-        st.markdown("### Monthly Purchase Order Trend")
+        pur_hist_trend, pur_hist_insight = st.columns([10, 1])
+
+        with pur_hist_trend:
+            st.subheader("Monthly Purchase Order Trend")
+
+        with pur_hist_insight:
+            run_insight_historical = st.button("Get Insights", key=f'{key_prefix}_historical')        
 
         # resolve columns safely from colmap
         date_col = colmap.get("date")
@@ -1011,6 +1013,15 @@ with purchase:
             st.info("Not enough time-series data to plot.")
 
 
+        if run_insight_historical:
+            
+            with st.spinner("Gathering Information..."):
+                group_hist_summary = build_historical_summary(df_f)
+
+            with st.spinner("Generating Insights..."):
+                group_hist_insight = generate_llm_review(group_hist_summary,type='Historical',level="group")
+
+            typewriter(group_hist_insight)
         # ---------- Breakdowns & Mixes ----------
 
         # helper to pick a fallback column
@@ -1313,9 +1324,12 @@ with purchase:
 
         st.markdown("<br>", unsafe_allow_html=True)
         col1, col2 = st.columns([10, 1])
-
+        
         with col1:
             st.subheader("Monthly Purchase Trend")
+
+        with col2:
+            run_insight = st.button("Get Insights", key=f'{key_prefix}_forecasts')
 
         def midpoint_date(start_date, end_date):
         # """Return the midpoint timestamp between two dates."""
@@ -1452,6 +1466,29 @@ with purchase:
         )
 
         st.plotly_chart(fig_monthly, use_container_width=True,key=f"{key_prefix}_main_plot")
+
+        if run_insight:
+            openai_filtered_data = openai_df.copy()
+
+            # Apply date range filter based on slider selection
+            openai_filtered_data = openai_filtered_data[
+                (openai_filtered_data['PO_CREATED_DATE'] >= selected_start_date) &
+                (openai_filtered_data['PO_CREATED_DATE'] <= selected_end_date)
+            ]
+
+            # Apply categorical filters
+            if selected_region != 'All':
+                openai_filtered_data = openai_filtered_data[openai_filtered_data['REGION'] == selected_region]
+            if selected_sales_org != 'All':
+                openai_filtered_data = openai_filtered_data[openai_filtered_data['SALES_ORG_NAME'] == selected_sales_org]
+            if selected_silhouette != 'All':
+                openai_filtered_data = openai_filtered_data[openai_filtered_data['SILHOUETTE_UPDATED'] == selected_silhouette]            
+            
+            with st.spinner("Generating Insights..."):
+                group_summary = compute_group_overview(openai_filtered_data)
+                group_insight = generate_llm_review(group_summary,type='Forecast',level="group")
+
+            typewriter(group_insight)
 
 
         # =============================================================================
