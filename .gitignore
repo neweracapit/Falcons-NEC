@@ -2,6 +2,7 @@
 data/
 predicted_data/
 historical_data/
+predicted_data_falcons/
 
 # test file
 test.py
