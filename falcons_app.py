@@ -1,4 +1,4 @@
-from streamlit_main import *
+from streamlit_falcons import *
 
 import streamlit as st
 import pandas as pd
@@ -327,28 +327,6 @@ with sales:
         name='Actual',
         line=dict(color='#1f77b4', width=2),
         marker=dict(size=8)
-    ))
-
-    # Trace 1 → Lower bound (P05)
-    fig_monthly.add_trace(go.Scatter(
-        x=monthly_filtered['MONTH_START'],
-        y=monthly_filtered['FORECAST_P05'],
-        name='P05 (Lower)',
-        mode='lines',
-        line=dict(width=0),             # invisible line
-        showlegend=False                # hide from legend
-    ))
-
-    # Trace 2 → Upper bound (P95) + Fill
-    fig_monthly.add_trace(go.Scatter(
-        x=monthly_filtered['MONTH_START'],
-        y=monthly_filtered['FORECAST_P95'],
-        name='Confidence Range',
-        mode='lines',
-        line=dict(width=0),             # invisible line
-        fill='tonexty',                 # fill area between P05 & P95
-        fillcolor='rgba(255, 127, 14, 0.2)',   # orange with transparency
-        showlegend=True
     ))
 
     fig_monthly.add_trace(go.Scatter(
