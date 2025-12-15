@@ -101,7 +101,7 @@ with sales:
         # ensure numeric
         df_f[actual_col] = pd.to_numeric(df_f.get(actual_col, 0), errors="coerce").fillna(0)
 
-        k1, k2, k3, k4 = st.columns(4)
+        k1, k2, k3= st.columns(3)
 
         # KPI 1: Total units
         total_units = int(df_f[actual_col].sum()) if not df_f.empty else 0
@@ -130,37 +130,12 @@ with sales:
         else:
             k3.metric("Top Sport", "N/A")
 
-        # KPI 4: YoY growth for selected year (if year filter produced a single year)
-        yoy_label = "YoY"
-        yoy_value = None
-        if year_col and year_col in df.columns and filters.get("year_range"):
-            yr = filters.get("year_range")
-            if isinstance(yr, tuple):
-                # if a range is selected, compute YoY between end and previous year (end vs end-1)
-                end_year = int(yr[1])
-                cur = df[df[year_col]==end_year][actual_col].sum()
-                prev = df[df[year_col]==(end_year-1)][actual_col].sum()
-            else:
-                # if selectbox style single year
-                end_year = int(yr) if str(yr).isdigit() else None
-                cur = df[df[year_col]==end_year][actual_col].sum() if end_year else 0
-                prev = df[df[year_col]==(end_year-1)][actual_col].sum() if end_year else 0
-
-            if prev > 0:
-                yoy_value = (cur - prev) / prev * 100
-                k4.metric(label=f"YoY change ({end_year } - {end_year-1})", value=f"{yoy_value:.2f} %")
-            else:
-                k4.metric(label=f"YoY change ({end_year})", value="N/A")
-        else:
-            k4.metric(label="YoY change", value="N/A")
-
         # small note: set these values in session if other components need them
         st.session_state.setdefault("kpis", {})
         st.session_state["kpis"].update({
             "total_units": total_units,
             "Top Silhouette": top_sil_name,
-            "Top Sport": top_sport_name,
-            "yoy": float(yoy_value) if yoy_value is not None else None
+            "Top Sport": top_sport_name
         })
 
 
@@ -168,7 +143,13 @@ with sales:
         # ---------- Time-series (monthly) ----------
         import plotly.express as px
 
-        st.markdown("### Monthly Actuals Trend")
+        col1, col2 = st.columns([10, 1])
+        
+        with col1:
+            st.subheader("Monthly Actuals Trend")
+
+        with col2:
+            run_insight = st.button("Get Insights", key='sales_historical')
 
         # resolve columns safely from colmap
         date_col = colmap.get("date")
@@ -534,7 +515,13 @@ with sales:
         # =============================================================================
 
         st.markdown("<br>", unsafe_allow_html=True)
-        st.subheader("Monthly Sales Trend")
+        col1, col2 = st.columns([10, 1])
+        
+        with col1:
+            st.subheader("Monthly Sales Trend")
+
+        with col2:
+            run_insight = st.button("Get Insights", key='sales_forecasts')
 
         def midpoint_date(start_date, end_date):
         # """Return the midpoint timestamp between two dates."""
@@ -852,7 +839,7 @@ with purchase:
         # ensure numeric
         df_f[actual_col] = pd.to_numeric(df_f.get(actual_col, 0), errors="coerce").fillna(0)
 
-        k1, k2, k3, k4, k5= st.columns(5)
+        k1, k2, k3, k5= st.columns(4)
 
         # KPI 1: Total units purchased
         total_units = int(df_f[actual_col].sum()) if not df_f.empty else 0
@@ -865,30 +852,6 @@ with purchase:
         # KPI 3: Avg units per PO line item
         avg_per_order = df_f[actual_col].mean() if total_orders > 0 else 0
         k3.metric("Avg units / PO item", f"{avg_per_order:,.0f}")
-
-        # KPI 4: YoY growth for selected year
-        yoy_label = "YoY"
-        yoy_value = None
-        if year_col and year_col in df.columns and filters.get("year_range"):
-            yr = filters.get("year_range")
-            if isinstance(yr, tuple):
-                # if a range is selected, compute YoY between end and previous year
-                end_year = int(yr[1])
-                cur = df[df[year_col]==end_year][actual_col].sum()
-                prev = df[df[year_col]==(end_year-1)][actual_col].sum()
-            else:
-                # if selectbox style single year
-                end_year = int(yr) if str(yr).isdigit() else None
-                cur = df[df[year_col]==end_year][actual_col].sum() if end_year else 0
-                prev = df[df[year_col]==(end_year-1)][actual_col].sum() if end_year else 0
-
-            if prev > 0:
-                yoy_value = (cur - prev) / prev * 100
-                k4.metric(label=f"YoY ({end_year-1}→{end_year})", value=f"{yoy_value:+.1f}%")
-            else:
-                k4.metric(label=f"YoY ({end_year})", value="N/A")
-        else:
-            k4.metric(label="YoY", value="N/A")
 
         # KPI 5: Top Season (NEW)
         if season_col and season_col in df_f.columns:
@@ -909,8 +872,7 @@ with purchase:
         st.session_state["kpis"].update({
             "total_units": total_units,
             "total_orders": total_orders,
-            "avg_per_order": avg_per_order,
-            "yoy": float(yoy_value) if yoy_value is not None else None
+            "avg_per_order": avg_per_order
         })
 
 
