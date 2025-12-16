@@ -252,12 +252,12 @@ with sales:
 
 
         # ensure a numeric actual exists
-        if actual_col is None:
-            # try pick first numeric
-            num_cols = df_f.select_dtypes(include="number").columns.tolist()
-            actual_col = num_cols[0] if num_cols else None
+#        if actual_col is None:
+#            # try pick first numeric
+#            num_cols = df_f.select_dtypes(include="number").columns.tolist()
+#            actual_col = num_cols[0] if num_cols else None
 
-
+        actual_col = 'SALES_COUNT'
         # small util to build top-N aggregated df
         def top_n_agg(df_local, group_col, value_col, top_n=10, orient="h"):
             grp = df_local.groupby(group_col)[value_col].sum().reset_index().rename(columns={value_col:"units"})
@@ -277,7 +277,6 @@ with sales:
             ("Top Countries", country_col, "horizontal"),
             ("Top Sales Org", salesorg_col, "horizontal"),
             ("Product Divison", proddiv_col, "vertical"),
-            ("Silhouette", silhouette_col, "vertical"),
             ("Gender", gender_col, "horizontal"),
             ("Sport", sport_col, "horizontal"),
         ]
@@ -826,13 +825,7 @@ with purchase:
         st.subheader("Key Metrics")
 
         # safe mapped names from colmap
-        actual_col = colmap.get("actual") or colmap.get("prediction") or "PURCHASE_COUNT"
-        # fallback if none of the above exist
-        if actual_col not in df_f.columns:
-            for cand in ("PURCHASE_COUNT", "purchase_count", "quantity", "units"):
-                if cand in df_f.columns:
-                    actual_col = cand
-                    break
+        actual_col = "PURCHASE_COUNT"
 
         year_col = colmap.get("year")
         country_col = colmap.get("country")
@@ -897,15 +890,6 @@ with purchase:
         elif "month" in df.columns:
             month_col = "month"
 
-        # pick actual column with fallbacks
-        actual_col = colmap.get("actual") or colmap.get("prediction") or None
-        # try common names
-        if actual_col is None:
-            for cand in ("PURCHASE_COUNT", "purchase_count", "quantity", "value", "units"):
-                if cand in df_f.columns:
-                    actual_col = cand
-                    break
-
         # last resort: pick the first numeric column that is not year/month/date
         if actual_col is None:
             numeric_cols = df_f.select_dtypes(include=["number"]).columns.tolist()
@@ -922,6 +906,13 @@ with purchase:
 
         # prepare ts_df copy
         ts_df = df_f.copy()
+
+        if 'SILHOUETTE' in df_f.columns:
+            df_f[silhouette_col] = (
+                df_f[silhouette_col]
+                .astype("string")
+                .astype("category")
+            )
 
         # build/resolve x_col (date)
         x_col = None
@@ -1007,10 +998,7 @@ with purchase:
         actual_col = find_col(colmap.get("actual"), colmap.get("prediction"), "PURCHASE_COUNT", "purchase_count", "quantity")
 
         # ensure a numeric actual exists
-        if actual_col is None:
-            # try pick first numeric
-            num_cols = df_f.select_dtypes(include="number").columns.tolist()
-            actual_col = num_cols[0] if num_cols else None
+        actual_col = 'PURCHASE_COUNT'
 
         # small util to build top-N aggregated df
         def top_n_agg(df_local, group_col, value_col, top_n=10, orient="h"):
@@ -1033,7 +1021,6 @@ with purchase:
             ("Top Countries", country_col, "horizontal"),
             ("Top Sales Orgs", salesorg_col, "horizontal"),
             ("Product Divison", proddiv_col, "vertical"),
-            ("Silhouette", silhouette_col, "vertical"),
             ("Gender", gender_col, "horizontal"),
             ("Sport", sport_col, "horizontal"),
             ("Season", season_col, "vertical"),
