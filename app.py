@@ -185,6 +185,8 @@ with sales:
 
         # prepare ts_df copy
         ts_df = df_f.copy()
+        ts_df = ts_df.dropna(subset=[actual_col])
+
 
         # build/resolve x_col (date)
         x_col = None
@@ -254,6 +256,7 @@ with sales:
             # try pick first numeric
             num_cols = df_f.select_dtypes(include="number").columns.tolist()
             actual_col = num_cols[0] if num_cols else None
+
 
         # small util to build top-N aggregated df
         def top_n_agg(df_local, group_col, value_col, top_n=10, orient="h"):
