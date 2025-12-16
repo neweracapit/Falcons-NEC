@@ -617,7 +617,7 @@ with sales:
 
         fig_monthly.add_trace(go.Scatter(
             x=monthly_filtered['MONTH_START'],
-            y=monthly_filtered['predicted_adjusted'],
+            y=monthly_filtered['predicted'],
             mode='lines+markers',
             name='Predicted',
             line=dict(color='#ff7f0e', width=2, dash='dash'),
@@ -627,7 +627,7 @@ with sales:
         if percentage_value != 0 :        
             fig_monthly.add_trace(go.Scatter(
                 x=monthly_filtered['MONTH_START'],
-                y=monthly_filtered['predicted'],
+                y=monthly_filtered['predicted_adjusted'],
                 mode='lines+markers',
                 name='Adjusted Prediction',
                 line=dict(color="#42ff0e", width=2, dash='dash'),
@@ -1387,7 +1387,7 @@ with purchase:
 
         fig_monthly.add_trace(go.Scatter(
             x=monthly_filtered['month'],
-            y=monthly_filtered['predicted_adjusted'],
+            y=monthly_filtered['predicted'],
             mode='lines+markers',
             name='PREDICTED',   
             line=dict(color='#ff7f0e', width=2, dash='dash'),
@@ -1397,7 +1397,7 @@ with purchase:
         if st.session_state.adjustment_applied != 0 :        
             fig_monthly.add_trace(go.Scatter(
                 x=monthly_filtered['month'],
-                y=monthly_filtered['predicted'],
+                y=monthly_filtered['predicted_adjusted'],
                 mode='lines+markers',
                 name='Adjusted Prediction',
                 line=dict(color="#42ff0e", width=2, dash='dash'),
